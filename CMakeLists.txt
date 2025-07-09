@@ -12,6 +12,7 @@ set(IMSRG_PROJECT_NAME        "imsrg++")
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CURRENT_BINARY_DIR "../build")
 option(IMSRG_BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 option(USE_ARMADILLO_EXTERN "Use version of armadillo in extern" ON)
 ########################################################################################################################

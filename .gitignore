@@ -1,4 +1,4 @@
-.vscode/
+**.vscode/
 build/
 #CMake output files
 CMakeFiles/
@@ -19,7 +19,7 @@ src/imsrg++
 tmp*
 src/.*.swp
 #Macos specific files
-.DS_Store
+**/.DS_Store
 #Image files for apptained
 *.sifs
 #Work folders should only contain the examples scripts
