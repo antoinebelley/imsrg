@@ -51,8 +51,8 @@ ARGS = {}
 # Maximum value of s, and maximum step size ds
 ARGS['smax'] = '500'
 ARGS['dsmax'] = '0.5'
-ARGS['basis'] = "NAT"
-ARGS['NAT_order'] = 'energy'
+# ARGS['basis'] = "NAT"
+# ARGS['NAT_order'] = 'energy'
 # ARGS['use_NAT_occupations'] = 'true'  # Use NAT occupations for the valence space
 
 # Norm of Omega at which we split off and start a new transformation
@@ -128,16 +128,16 @@ ARGS["3bme_type"] = "no2b"
 
 # Loop over multiple jobs to submit
 for Z in range(7, 8):
- A = 14
+ A = 15
  for reference in ['%s%d' % (ELEM[Z], A)]:
   ARGS['reference'] = reference
   print('Z = ', Z)
-  for e in [10]:
+  for e in [4]:
    for hw in [16]:
 
      ARGS['emax'] = '%d' % e
-     ARGS['e3max'] = '18'
-     ARGS['emax_imsrg'] = 8
+     ARGS['e3max'] = '12'
+    #  ARGS['emax_imsrg'] = 2
 
      # Delta
     # [2007, 2460, 3448, 3373, 1141, 3319, 3098, 1429, 3895, 1172, 90, 723, 2125, 2245, 750, 1469, 1177, 493, 500, 3621, 606, 3480, 3260, 3813, 3105, 2411, 3350, 774, 2618, 4117, 922, 1173, 1802, 3472]
@@ -157,9 +157,12 @@ for Z in range(7, 8):
      ARGS['hw'] = '%d' % hw
      ARGS['A'] = '%d' % A
      # this is just a label when custom_valence_space is set
-     ARGS['valence_space'] = 'p-shell'
+     ARGS['custom_valence_space'] = "He4,p0p3,n0p3,p0p1,n0p1,p1s1,n1s1,p0d5,n0d5"
+     ARGS['valence_space'] = 'pd5s1-shell'
+     ARGS['BetaCM'] = '1'
+     ARGS['denominator_delta'] = '10'
      # ARGS['custom_valence_space'] = 'Ni56,p0f5,n0f5,p1p3,n1p3,p1p1,n1p1,p0g9,n0g9'  # AKA: Ni56 core with jj44pn
-     ARGS['Operators'] = 'Fermi'
+     ARGS['Operators'] = 'Anapole'
 
     
     # Make an estimate of how much time to request. Only used for slurm at the moment.

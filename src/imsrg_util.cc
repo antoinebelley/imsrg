@@ -167,7 +167,7 @@ namespace imsrg_util
               std::istringstream( opnamesplit[1] ) >> hw_HCM;
            }
            int A = modelspace.GetTargetMass();
-//           std::cout << "Calling HCM with hw = " << hw_HCM << " target mass = " << A << std::endl;
+           std::cout << "Calling HCM with hw = " << hw_HCM << " target mass = " << A << std::endl;
            theop =  TCM_Op(modelspace) + 0.5*A*M_NUCLEON*hw_HCM*hw_HCM/HBARC/HBARC*R2CM_Op(modelspace);
 //         }
       }
@@ -1883,7 +1883,7 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
         double nineJ = AngMom::NineJ(oi.l, 0.5, ji, oj.l, 0.5, jj, 1, 1, 1);
         double hatfactors = sqrt((2 * ji + 1) * (2 * jj + 1) * (2 * oi.l + 1) * (2 * oj.l + 1));
         // Including the factor of sqrt(4pi/3) from the spherical harmonics
-        As.OneBody(i, j) = 3 * sqrt(2) * magnetic_moment * r2int * hatfactors * nineJ * AngMom::ThreeJ(oj.l, 1, oi.l, 0, 0, 0);
+        As.OneBody(i, j) = 3 * sqrt(2) * magnetic_moment * r2int * hatfactors * nineJ * modelspace.phase(oi.l) * AngMom::ThreeJ(oi.l, 1, oj.l, 0, 0, 0);
         As.OneBody(j, i) = -  modelspace.phase((oi.j2-oj.j2)/2) * As.OneBody(i, j); // Operator is imagniary and therefore antisymmetric, reduced ME need a phase under hermitian conjugation
       }
     }

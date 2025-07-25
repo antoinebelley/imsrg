@@ -1479,6 +1479,11 @@ int main(int argc, char** argv)
       
       std::cout << "   HF: " << op.ZeroBody << std::endl;
 
+      if (op.GetJRank() == 0 and (op.GetTRank() != 0 or op.GetParity() != 0))
+      {
+        op.MakeReduced();
+      }
+
       if ( (eMax_imsrg != -1) or (e2Max_imsrg != -1) or (e3Max_imsrg) != -1)
       {
 //     ModelSpace modelspace_imsrg = modelspace;
@@ -1486,7 +1491,7 @@ int main(int argc, char** argv)
         op = op.Truncate(modelspace_imsrg);
       }
 
-
+      
       // Added by Antoine Belley
       if (write_HF_ops)
       {

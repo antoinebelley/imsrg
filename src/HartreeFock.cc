@@ -1102,7 +1102,7 @@ Operator HartreeFock::GetNormalOrderedH(int particle_rank)
      arma::mat D(npq,npq,arma::fill::zeros);  // <ij|ab> = <ji|ba>
      arma::mat V3NO(npq,npq,arma::fill::zeros);  // <ij|ab> = <ji|ba>
 
-#pragma omp parallel for schedule(dynamic,1) // confirmed that this improves performance
+     #pragma omp parallel for schedule(dynamic,1) // confirmed that this improves performance
      for (int i=0; i<npq; ++i)
      {
        Ket & bra = tbc.GetKet(i);

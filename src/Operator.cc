@@ -709,6 +709,7 @@ Operator Operator::DoNormalOrderingDagger(int sign, std::set<index_t> occupied) 
 Operator Operator::Truncate(ModelSpace &ms_new)
 {
   Operator OpNew(ms_new, rank_J, rank_T, parity, particle_rank);
+  OpNew.is_reduced = is_reduced;
 
   int new_emax = ms_new.GetEmax();
   if (new_emax > modelspace->GetEmax())
