@@ -148,6 +148,14 @@ void GeneratorPV::ConstructGeneratorPV_SingleRef(std::function<double(double, do
             ETAPV2(ibra, iket) =  etafunc(V2(ibra, iket), denominator);
          }
       }
+      for (auto &ibra : tbc_bra.GetKetIndex_cc()) // cc means core-core ('holes' refer to the reference state)
+      {
+         for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_qq(), tbc_ket.GetKetIndex_vv(), tbc_ket.GetKetIndex_qv()))
+         {
+            double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
+            ETAPV2(ibra, iket) = etafunc(V2(ibra, iket), denominator);
+         }
+      }
       Etapv->profiler.timer["UpdateEta2betapv"] += omp_get_wtime() - start_time;
    }
 }
