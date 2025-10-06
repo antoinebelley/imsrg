@@ -51,7 +51,9 @@ namespace imsrg_util
  Operator MultipoleResponseOp(ModelSpace &modelspace, int rL, int YL, int isospin);
  Operator IVDipoleOp(ModelSpace& modelspace, int rL, int YL);
  Operator ISDipoleOp(ModelSpace& modelspace, int rL, int YL, double Rms);
- Operator SchiffOp(ModelSpace& modelspace, int rL, int YL, double Rms);
+ Operator SchiffOp(ModelSpace& modelspace, double Rms);
+ Operator SchiffOp_rr2(ModelSpace& modelspace, double Rms);
+ Operator SchiffOp_r3(ModelSpace& modelspace, double Rms);
  Operator ElectricMultipoleOp(ModelSpace& modelspace, int L);
  Operator NeutronElectricMultipoleOp(ModelSpace& modelspace, int L);
  Operator IntrinsicElectricMultipoleOp(ModelSpace& modelspace, int L);

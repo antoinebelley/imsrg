@@ -224,24 +224,37 @@ void GeneratorPV::ConstructGeneratorPV_ShellModel(std::function<double(double, d
       arma::mat &ETAPV2 = iter.second;
       arma::mat &V2 = V->TwoBody.GetMatrix(ch_bra, ch_ket);
       // Decouple the core
-      for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_cc(),tbc_ket.GetKetIndex_vc()))
+      for (auto &ibra : VectorUnion(tbc_bra.GetKetIndex_cc(),tbc_bra.GetKetIndex_vc()))
+      {
+         for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_qq(), tbc_ket.GetKetIndex_vv(), tbc_ket.GetKetIndex_qv()))
+         {
+            double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
+            ETAPV2(ibra, iket) = eta_func(V2(ibra, iket), denominator);
+         }
+      }
+      for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_cc(), tbc_ket.GetKetIndex_vc()))
       {
          for (auto &ibra : VectorUnion(tbc_bra.GetKetIndex_qq(), tbc_bra.GetKetIndex_vv(), tbc_bra.GetKetIndex_qv()))
          {
-            // std::cout << "ch_bra=" << ch_bra << " ch_ket=" << ch_ket << " ibra=" << ibra << " iket=" << iket << std::endl;
-            // std::cout<< ETAPV2 <<std::endl;
+
             double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
             ETAPV2(ibra, iket) = eta_func(V2(ibra, iket), denominator);
          }
       }
 
       // Decouple the valence space
+      for (auto &ibra : tbc_bra.GetKetIndex_vv())
+      {
+         for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_qv(), tbc_ket.GetKetIndex_qq()))
+         {
+            double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
+            ETAPV2(ibra, iket) = eta_func(V2(ibra, iket), denominator);
+         }
+      }
       for (auto &iket : tbc_ket.GetKetIndex_vv())
       {
          for (auto &ibra : VectorUnion(tbc_bra.GetKetIndex_qv(), tbc_bra.GetKetIndex_qq()))
          {
-            // std::cout << "ch_bra=" << ch_bra << " ch_ket=" << ch_ket << " ibra=" << ibra << " iket=" << iket << std::endl;
-            // std::cout << ETAPV2 <<std::endl; 
             double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
             ETAPV2(ibra, iket) = eta_func(V2(ibra, iket), denominator);
          }

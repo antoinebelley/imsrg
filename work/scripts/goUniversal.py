@@ -127,8 +127,8 @@ ARGS["3bme_type"] = "no2b"
 # ARGS["no2b_precision"] = "half"
 
 # Loop over multiple jobs to submit
-for Z in range(7, 8):
- A = 15
+for Z in range(2,3):
+ A = 4
  for reference in ['%s%d' % (ELEM[Z], A)]:
   ARGS['reference'] = reference
   print('Z = ', Z)
@@ -157,12 +157,12 @@ for Z in range(7, 8):
      ARGS['hw'] = '%d' % hw
      ARGS['A'] = '%d' % A
      # this is just a label when custom_valence_space is set
-     ARGS['custom_valence_space'] = "He4,p0p3,n0p3,p0p1,n0p1,p1s1,n1s1,p0d5,n0d5"
-     ARGS['valence_space'] = 'pd5s1-shell'
+    #  ARGS['custom_valence_space'] = "He4,p0p3,n0p3,p0p1,n0p1,p1s1,n1s1,p0d5,n0d5"
+     ARGS['valence_space'] = 'sp-shell'
      ARGS['BetaCM'] = '1'
      ARGS['denominator_delta'] = '10'
      # ARGS['custom_valence_space'] = 'Ni56,p0f5,n0f5,p1p3,n1p3,p1p1,n1p1,p0g9,n0g9'  # AKA: Ni56 core with jj44pn
-     ARGS['Operators'] = 'Anapole'
+    #  ARGS['Operators'] = 'Anapole'
 
     
     # Make an estimate of how much time to request. Only used for slurm at the moment.
