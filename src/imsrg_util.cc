@@ -493,7 +493,7 @@ namespace imsrg_util
       {
         double R;
         std::istringstream( opnamesplit[1]) >> R;
-        theop =  SchiffOp( modelspace,3,1,R);
+        theop =  SchiffOp( modelspace, R);
       }
       else if (opnamesplit[0] == "VPT" )
       {
@@ -1861,34 +1861,44 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
    return T2;
  }
 
-  /// Ananople moment operator -- added by A. B.
-  Operator AnapoleMoment(ModelSpace& modelspace)
-  {
-    Operator As(modelspace, 1, 0, 1, 2);
-    As.SetAntiHermitian();
-    double bL = pow(HBARC * HBARC / M_NUCLEON / modelspace.GetHbarOmega(), 0.5 * 1); // b^L where b=sqrt(hbar/mw)
-    int norbits = modelspace.GetNumberOrbits();
-    for (int i=0; i<norbits; ++i)
-    {
-      Orbit & oi = modelspace.GetOrbit(i);
-      double ji = 0.5 * oi.j2;
-      double magnetic_moment = oi.tz2 < 0 ? PROTON_SPIN_G/2 : NEUTRON_SPIN_G/2; // These are 5.586 and -3.826 for proton and neutron, respectively. Defined in PhysicalConstants.hh
-      for (int j: As.OneBodyChannels.at({oi.l, oi.j2, oi.tz2}))
-      {
-        if (j<i) continue;
-        Orbit& oj = modelspace.GetOrbit(j);
-        if (oi.tz2 != oj.tz2) continue;
-        double jj = 0.5 * oj.j2; 
-        double r2int = RadialIntegral(oi.n, oi.l, oj.n, oj.l, 1) * bL ;
-        double nineJ = AngMom::NineJ(oi.l, 0.5, ji, oj.l, 0.5, jj, 1, 1, 1);
-        double hatfactors = sqrt((2 * ji + 1) * (2 * jj + 1) * (2 * oi.l + 1) * (2 * oj.l + 1));
-        // Including the factor of sqrt(4pi/3) from the spherical harmonics
-        As.OneBody(i, j) = 3 * sqrt(2) * magnetic_moment * r2int * hatfactors * nineJ * modelspace.phase(oi.l) * AngMom::ThreeJ(oi.l, 1, oj.l, 0, 0, 0);
-        As.OneBody(j, i) = -  modelspace.phase((oi.j2-oj.j2)/2) * As.OneBody(i, j); // Operator is imagniary and therefore antisymmetric, reduced ME need a phase under hermitian conjugation
-      }
-    }
-    return As;
-  }
+ /// Ananople moment operator -- added by A. B.
+ // Comes from operator \mu_i r x \sigma see PhysRevA.102.052828
+ // factor of -i sqrt(2) from r x \sigma = -i sqrt(2) r [Y1 x sigma]^{1}
+ // is not included
+ Operator AnapoleMoment(ModelSpace &modelspace)
+ {
+   Operator As(modelspace, 1, 0, 1, 2);
+   As.SetAntiHermitian();
+   double bL = pow(HBARC * HBARC / M_NUCLEON / modelspace.GetHbarOmega(), 0.5); // b^L where b=sqrt(hbar/mw)
+   int norbits = modelspace.GetNumberOrbits();
+   for (int i = 0; i < norbits; ++i)
+   {
+     Orbit &oi = modelspace.GetOrbit(i);
+     double ji = 0.5 * oi.j2;
+     double magnetic_moment = oi.tz2 < 0 ? PROTON_SPIN_G / 2.0 : NEUTRON_SPIN_G / 2.0; // These are 5.586 and -3.826 for proton and neutron, respectively. Defined in PhysicalConstants.hh
+     // double magnetic_moment = oi.tz2 < 0 ? 0 :  NEUTRON_SPIN_G/2.0; // These are 5.586 and -3.826 for proton and neutron, respectively. Defined in PhysicalConstants.hh
+     for (int j : As.OneBodyChannels.at({oi.l, oi.j2, oi.tz2}))
+     {
+       if (j < i)
+         continue;
+       Orbit &oj = modelspace.GetOrbit(j);
+       if (abs(oi.l - oj.l) > 1 or oi.l == oj.l)
+         continue; //  l+-1 are allowed
+       if (oi.tz2 != oj.tz2)
+         continue; // Should already be enforced by OneBodyChannels, but just to be sure
+       if (abs(oi.n - oj.n) > 1)
+         continue; // n and n+-1 are allowed
+       double jj = 0.5 * oj.j2;
+       double r2int = RadialIntegral(oi.n, oi.l, oj.n, oj.l, 1) * bL;
+       double nineJ = AngMom::NineJ(oi.l, 0.5, ji, oj.l, 0.5, jj, 1.0, 1.0, 1.0);
+       double hatfactors = sqrt((2.0 * ji + 1.0) * (2.0 * jj + 1.0) * (2.0 * oi.l + 1.0) * (2.0 * oj.l + 1.0));
+       // Including the factor of sqrt(4pi/3) from the spherical harmonics
+       As.OneBody(i, j) = 3 * sqrt(2) * magnetic_moment * r2int * hatfactors * nineJ * modelspace.phase(oi.l) * AngMom::ThreeJ(oi.l, 1.0, oj.l, 0, 0, 0);
+       As.OneBody(j, i) = -modelspace.phase((oi.j2 - oj.j2) / 2) * As.OneBody(i, j); // Operator is imagniary and therefore antisymmetric, reduced ME need a phase under hermitian conjugation
+     }
+   }
+   return As;
+ }
 
   /// Mutipole responses (except dipole) with units fm\f$ ^{rL}\f$ (see PRC97(2018)054306 ) --added by bhu
   Operator MultipoleResponseOp(ModelSpace& modelspace, int rL, int YL, int isospin)
@@ -1968,11 +1978,11 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
 
 
   /// Schiff Moment = Isoscalar dipole / 10 (where the sum is over proton orbits only)  with units e * fm^3  --added by DK. Ref. PHYSICAL REVIEW C 89, 014335 (2014)
-  Operator SchiffOp(ModelSpace& modelspace, int rL, int YL, double Rms)
+  Operator SchiffOp(ModelSpace& modelspace,  double Rms)
   {   
-    Operator EL(modelspace, YL,0,YL%2,2);
-    double bL = pow( HBARC*HBARC/M_NUCLEON/modelspace.GetHbarOmega(),0.5*rL); // b^L where b=sqrt(hbar/mw)
-    double bLp = pow( HBARC*HBARC/M_NUCLEON/modelspace.GetHbarOmega(),0.5*1);
+    Operator EL(modelspace, 1,0,1,2);
+    double bL = pow( HBARC*HBARC/M_NUCLEON/modelspace.GetHbarOmega(),1.5); // b^L where b=sqrt(hbar/mw)
+    double bLp = pow( HBARC*HBARC/M_NUCLEON/modelspace.GetHbarOmega(),0.5);
     // int norbits = modelspace.GetNumberOrbits();
     for (int i : modelspace.proton_orbits)
    // for (int i=0; i<norbits; ++i) //DK: modify for protons only
@@ -1984,17 +1994,63 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
         if (j<i) continue;
         Orbit& oj = modelspace.GetOrbit(j);
         double jj = 0.5*oj.j2;
-        double r2int = RadialIntegral(oi.n,oi.l,oj.n,oj.l,rL) * bL ;
+        double r2int = RadialIntegral(oi.n,oi.l,oj.n,oj.l,3) * bL ;
         double r2intp = RadialIntegral(oi.n,oi.l,oj.n,oj.l,1) * bLp ;
-        r2int = r2int - 5.0/3.0*r2intp*Rms*Rms ;
-        EL.OneBody(i,j) = modelspace.phase(jj+YL-0.5) * sqrt( (2*ji+1)*(2*jj+1)*(2*YL+1)/4./PI) * AngMom::ThreeJ(ji,jj,YL,0.5,-0.5,0) * r2int;
-        EL.OneBody(j,i) = modelspace.phase((oi.j2-oj.j2)/2) * EL.OneBody(i,j);
+        r2int -=  5.0 / 3.0 * r2intp * Rms * Rms;
+        EL.OneBody(i,j) = modelspace.phase(jj+0.5) * sqrt( (2*ji+1)*(2*jj+1)*3/4./PI) * AngMom::ThreeJ(ji,jj,1.0,0.5,-0.5,0) * r2int;
+        EL.OneBody(j,i) = modelspace.phase(ji-jj) * EL.OneBody(i,j);
       }
     }
     return EL/10;
   }
 
+  Operator SchiffOp_rr2(ModelSpace &modelspace, double Rms)
+  {
+    Operator EL(modelspace, 1, 0, 1, 2);
+    double bLp = pow(HBARC * HBARC / M_NUCLEON / modelspace.GetHbarOmega(), 0.5);
+    // int norbits = modelspace.GetNumberOrbits();
+    for (int i : modelspace.proton_orbits)
+    // for (int i=0; i<norbits; ++i) //DK: modify for protons only
+    {
+      Orbit &oi = modelspace.GetOrbit(i);
+      double ji = 0.5 * oi.j2;
+      for (int j : EL.OneBodyChannels.at({oi.l, oi.j2, oi.tz2}))
+      {
+        if (j < i)
+          continue;
+        Orbit &oj = modelspace.GetOrbit(j);
+        double jj = 0.5 * oj.j2;
+        double r2intp = - 5.0/3.0 * RadialIntegral(oi.n, oi.l, oj.n, oj.l, 1) * bLp * Rms * Rms;
+        EL.OneBody(i, j) = modelspace.phase(jj + 0.5) * sqrt((2 * ji + 1) * (2 * jj + 1) * 3 / 4. / PI) * AngMom::ThreeJ(ji, jj, 1.0, 0.5, -0.5, 0) * r2intp;
+        EL.OneBody(j, i) = modelspace.phase(ji - jj) * EL.OneBody(i, j);
+      }
+    }
+    return EL / 10;
+  }
 
+  Operator SchiffOp_r3(ModelSpace &modelspace, double Rms)
+  {
+    Operator EL(modelspace, 1, 0, 1, 2);
+    double bL = pow(HBARC * HBARC / M_NUCLEON / modelspace.GetHbarOmega(), 1.5);
+    // int norbits = modelspace.GetNumberOrbits();
+    for (int i : modelspace.proton_orbits)
+    // for (int i=0; i<norbits; ++i) //DK: modify for protons only
+    {
+      Orbit &oi = modelspace.GetOrbit(i);
+      double ji = 0.5 * oi.j2;
+      for (int j : EL.OneBodyChannels.at({oi.l, oi.j2, oi.tz2}))
+      {
+        if (j < i)
+          continue;
+        Orbit &oj = modelspace.GetOrbit(j);
+        double jj = 0.5 * oj.j2;
+        double r2int = RadialIntegral(oi.n, oi.l, oj.n, oj.l, 3) * bL;
+        EL.OneBody(i, j) = modelspace.phase(jj + 0.5) * sqrt((2 * ji + 1) * (2 * jj + 1) * 3 / 4. / PI) * AngMom::ThreeJ(ji, jj, 1.0, 0.5, -0.5, 0) * r2int;
+        EL.OneBody(j, i) = modelspace.phase(ji - jj) * EL.OneBody(i, j);
+      }
+    }
+    return EL / 10;
+  }
 
   /// Returns a reduced electric multipole operator with units \f$ e\f$ fm\f$^{\lambda} \f$
   /// See Suhonen eq. (6.23)

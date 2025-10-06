@@ -1010,6 +1010,8 @@ PYBIND11_MODULE(pyIMSRG, m)
       m.def("ElectricMultipoleOp", imsrg_util::ElectricMultipoleOp);
       m.def("MagneticMultipoleOp", imsrg_util::MagneticMultipoleOp);
       m.def("SchiffOp",imsrg_util::SchiffOp);
+      m.def("SchiffOp_rr2", imsrg_util::SchiffOp_rr2);
+      m.def("SchiffOp_r3", imsrg_util::SchiffOp_r3);
       m.def("Sigma_Op", imsrg_util::Sigma_Op);
       m.def("Isospin2_Op", imsrg_util::Isospin2_Op);
       m.def("LdotS_Op", imsrg_util::LdotS_Op);
