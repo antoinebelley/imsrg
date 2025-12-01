@@ -100,6 +100,7 @@ namespace imsrg_util
       else if (opname == "M1L")           theop =  MagneticMultipoleOp_pn(modelspace,1,"orbit") ;
       else if (opname == "Fermi")         theop =  AllowedFermi_Op(modelspace) ;
       else if (opname == "GamowTeller")   theop =  AllowedGamowTeller_Op(modelspace) ;
+      else if (opname == "J2")            theop =  J2Op(modelspace);
       else if (opname == "Iso2")          theop =  Isospin2_Op(modelspace) ;
       else if (opname == "Tz2")           theop =  TzSquared_Op(modelspace) ;
       else if (opname == "R2CM")          theop =  R2CM_Op(modelspace) ;
@@ -1742,7 +1743,33 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
   return a_nu; // There may need to be some additional normalization by pi or something...
 }
 
-
+/// Returns the \f$ J^{2} \f$ operator
+Operator J2Op(ModelSpace &modelspace)
+{
+  Operator J2(modelspace, 0, 0, 0, 2);
+  //One-body part = j(j+1)
+  int norbits = modelspace.GetNumberOrbits();
+  for (int i = 0; i < norbits; ++i)
+  {
+    Orbit &oi = modelspace.GetOrbit(i);
+    double ji = 0.5 * oi.j2;
+    J2.OneBody(i, i) = ji * (ji + 1);
+  }
+  //Two-body part = J(J+1) - j1(j1+1) - j2(j2+1)
+  for (int ch = 0; ch < J2.nChannels; ++ch)
+  {
+    TwoBodyChannel &tbc = modelspace.GetTwoBodyChannel(ch);
+    arma::mat &TB = J2.TwoBody.GetMatrix(ch);  
+    for (size_t ibra = 0; ibra < tbc.GetNumberKets(); ++ibra)
+    {
+      Ket &bra = tbc.GetKet(ibra);
+      Orbit &oa = modelspace.GetOrbit(bra.p);
+      Orbit &ob = modelspace.GetOrbit(bra.q);
+      TB(ibra, ibra) = tbc.J * (tbc.J + 1) - 0.5 * oa.j2 * (0.5 * oa.j2 + 1) - 0.5 * ob.j2 * (0.5 * ob.j2 + 1);
+    } // for ibra
+  } // for ch
+  return J2;
+}
 
 /// Returns the \f$ T^{2} \f$ operator
  Operator Isospin2_Op(ModelSpace& modelspace)
