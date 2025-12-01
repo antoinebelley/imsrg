@@ -1896,6 +1896,8 @@ Operator FourierBesselCoeff(ModelSpace& modelspace, int nu, double R, std::set<i
        if (abs(oi.n - oj.n) > 1)
          continue; // n and n+-1 are allowed
        double jj = 0.5 * oj.j2;
+       if (abs(ji-jj) > As.GetJRank() or (ji+jj) < As.GetJRank())
+         continue; // angular momentum selection rules  
        double r2int = RadialIntegral(oi.n, oi.l, oj.n, oj.l, 1) * bL;
        double nineJ = AngMom::NineJ(oi.l, 0.5, ji, oj.l, 0.5, jj, 1.0, 1.0, 1.0);
        double hatfactors = sqrt((2.0 * ji + 1.0) * (2.0 * jj + 1.0) * (2.0 * oi.l + 1.0) * (2.0 * oj.l + 1.0));

@@ -152,7 +152,7 @@ void GeneratorPV::ConstructGeneratorPV_SingleRef(std::function<double(double, do
       {
          for (auto &iket : VectorUnion(tbc_ket.GetKetIndex_qq(), tbc_ket.GetKetIndex_vv(), tbc_ket.GetKetIndex_qv()))
          {
-            double denominator = Get2bDenominator(ch_bra, ch_ket, ibra, iket);
+            double denominator = Get2bDenominator(ch_bra, ch_ket, ibra , iket);
             ETAPV2(ibra, iket) = etafunc(V2(ibra, iket), denominator);
          }
       }
