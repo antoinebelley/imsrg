@@ -70,6 +70,7 @@ namespace Commutator
     void comm220ss(const Operator &X, const Operator &Y, Operator &Z);
     void comm111ss(const Operator &X, const Operator &Y, Operator &Z);
     void comm121ss(const Operator &X, const Operator &Y, Operator &Z);
+    void comm121_OD_ss(const Operator &X, const Operator &Y, Operator &Z);
     void comm221ss(const Operator &X, const Operator &Y, Operator &Z);
     void comm122ss(const Operator &X, const Operator &Y, Operator &Z);
     void comm222_pp_hhss(const Operator &X, const Operator &Y, Operator &Z);

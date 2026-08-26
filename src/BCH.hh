@@ -25,6 +25,7 @@ namespace BCH
     Operator BCH_Product(Operator &X, Operator &Y);
     Operator BCH_Transform(const Operator &Op, const Operator &Omega);
     Operator Standard_BCH_Transform(const Operator &Op, const Operator &Omega);
+    Operator Standard_BCH_Transform_Product(const Operator &Op, const Operator &Omega1, const Operator &Omega2);
     Operator Brueckner_BCH_Transform(const Operator &Op, const Operator &Omega);
 
     double EstimateBCHError(Operator &Omega, Operator H);

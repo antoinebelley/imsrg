@@ -43,6 +43,15 @@ void IMSRGSolverPV::SetFlowFilePV(std::string str)
       }
 }
 
+void IMSRGSolverPV::SetOmegaPV(size_t i, Operator &om)
+{
+  if ((i + 1) > OmegaPV.size())
+  {
+    OmegaPV.resize(i + 1);
+  }
+  OmegaPV[i] = om;
+}
+
 
 void IMSRGSolverPV::Solve_flow_RK4_PV()
 {
@@ -126,6 +135,120 @@ void IMSRGSolverPV::Solve_flow_RK4_PV()
     //   FlowingOps[0].PrintOneBody();
 }
 
+// void IMSRGSolverPV::Solve_flow_RK4_PV()
+// {
+//       istep = 0;
+      
+//       generatorPV.Update(FlowingOps[0], FlowingOpsPV[0], Eta, Etapv);
+//       Elast = H_0->ZeroBody;
+//       cumulative_error = 0;
+//       // Write details of the flow
+//       WriteFlowStatusHeaderPV(std::cout); // commented beatriz 03/05/2025
+//       WriteFlowStatusPV(std::cout);
+//       for (istep = 1; s < smax; ++istep)
+//       {
+//             double norm_eta = Eta.Norm();
+//             double norm_etapv = Etapv.Norm();
+//             if (sqrt(norm_eta*norm_eta+norm_etapv*norm_etapv) < eta_criterion)
+//             {       
+//                   break;
+//             }
+
+//             ds = std::min(ds_max, smax - s);
+//             s += ds;
+//             int nops = FlowingOps.size();
+//             int nops_pv = FlowingOpsPV.size();
+//             if (nops != nops_pv)
+//             {
+//                 std::cout<<"Problem, number of PC and PV operators isn't the same..."<<std::endl;
+//                 exit(0);
+//             }
+//             std::vector<Operator> K1H(nops);
+//             std::vector<Operator> K2H(nops);
+//             std::vector<Operator> K3H(nops);
+//             std::vector<Operator> K4H(nops);
+//             std::vector<Operator> KtmpH(nops);
+//             std::vector<Operator> K1V(nops);
+//             std::vector<Operator> K2V(nops);
+//             std::vector<Operator> K3V(nops);
+//             std::vector<Operator> K4V(nops);
+//             std::vector<Operator> KtmpV(nops);
+//             std::cout << FlowingOpsPV[0].Norm() << std::endl;
+//             std::cout << Eta.Norm() << std::endl;
+//             for (int i = 0; i < nops; i++)
+//             {   
+//                 if (i==0)
+//                 {
+//                     K1V[i] = Commutator::Commutator(Etapv, FlowingOps[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 0.5 * ds * K1V[i];
+//                     KtmpH[i] = FlowingOps[i];
+//                 }
+//                 else
+//                 {
+//                     K1V[i] = Commutator::Commutator(Etapv, FlowingOps[i]);
+//                     K1H[i] = Commutator::Commutator(Etapv, FlowingOpsPV[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 0.5 * ds * K1V[i];
+//                     KtmpH[i] = FlowingOps[i] + 0.5 * ds * K1H[i];
+//                 }
+//             }
+//             generatorPV.Update(KtmpH[0], KtmpV[0], Eta, Etapv);
+//             for (int i = 0; i < nops; i++)
+//             {
+//                 if (i == 0)
+//                 {
+//                     K2V[i] = Commutator::Commutator(Etapv, KtmpH[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 0.5 * ds * K2V[i];
+//                 }
+//                 else
+//                 {
+//                     K2V[i] =  Commutator::Commutator(Etapv, KtmpH[i]);
+//                     K2H[i] =  Commutator::Commutator(Etapv, KtmpV[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 0.5 * ds * K2V[i];
+//                     KtmpH[i] = FlowingOps[i] + 0.5 * ds * K2H[i];
+//                 }
+//             }
+//             generatorPV.Update(KtmpH[0], KtmpV[0], Eta, Etapv);
+//             for (int i = 0; i < nops; i++)
+//             {
+//                 if (i == 0)
+//                 {
+//                     K3V[i] = Commutator::Commutator(Etapv, KtmpH[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 1.0 * ds * K3V[i];
+//                 }
+//                 else
+//                 {
+//                     K3V[i] = Commutator::Commutator(Etapv, KtmpH[i]);
+//                     K3H[i] = Commutator::Commutator(Etapv, KtmpV[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 1.0 * ds * K3V[i];
+//                     KtmpH[i] = FlowingOps[i] + 1.0 * ds * K3H[i];
+//                 }
+//             }
+//             generatorPV.Update(KtmpH[0], KtmpV[0], Eta, Etapv);
+//             for (int i = 0; i < nops; i++)
+//             {
+//                 if (i == 0)
+//                 {
+//                     K4V[i] = Commutator::Commutator(Etapv, KtmpH[i]);
+//                     KtmpV[i] = FlowingOpsPV[i] + 0.5 * ds * K4V[i];
+//                     FlowingOpsPV[i] += ds / 6.0 * (K1V[i] + 2 * K2V[i] + 2 * K3V[i] + K4V[i]);
+//                 }
+//                 else
+//                 {
+//                     K4V[i] = Commutator::Commutator(Etapv, KtmpH[i]);
+//                     K4H[i] = Commutator::Commutator(Etapv, KtmpV[i]);
+//                     FlowingOps[i] += ds / 6.0 * (K1H[i] + 2 * K2H[i] + 2 * K3H[i] + K4H[i]);
+//                     FlowingOpsPV[i] += ds / 6.0 * (K1V[i] + 2 * K2V[i] + 2 * K3V[i] + K4V[i]);
+//                 }
+//             }
+//             // FlowingOps[0].PrintOneBody();
+//             generatorPV.Update(FlowingOps[0], FlowingOpsPV[0], Eta, Etapv);
+//             // Write details of the flow
+//             WriteFlowStatusPV(flowfile);
+//             WriteFlowStatusPV(std::cout);
+//             Elast = FlowingOps[0].ZeroBody;
+//       }
+//     //   FlowingOps[0].PrintOneBody();
+// }
 
 void IMSRGSolverPV::NewOmega_PV()
 {
@@ -177,6 +300,105 @@ void IMSRGSolverPV::NewOmega_PV()
 }
 
 
+// void IMSRGSolverPV::Solve_magnus_euler_PV()
+// {
+//   istep = 0;
+//   generatorPV.Update(FlowingOps[0], FlowingOpsPV[0], Eta, Etapv);
+//   // SRS noticed this on June 12 2024. If these two parameters are equal, and especially if we're using the hunter-gatherer mode, then we become sensitive to
+//   // numerical precision when deciding if we should split omega, leading to machine-dependent behavior.
+//   if ( std::abs( omega_norm_max - norm_domega)<1e-6 )
+//   {
+//      norm_domega += 1e-4;
+//      std::cout << __func__ << ":  adjusting norm_domega to " << norm_domega << "  to avoid numerical trouble, since omega_norm_max = " << omega_norm_max << std::endl;
+//   }
+
+//   Elast = H_0->ZeroBody;
+//   cumulative_error = 0;
+//   // Write details of the flow
+//   //   WriteFlowStatusPV(flowfile);
+//   WriteFlowStatusHeaderPV(std::cout);
+//   WriteFlowStatusPV(std::cout);
+
+//   for (istep = 1; s < smax; ++istep)
+//   {
+//     double norm_eta = Eta.Norm();
+//     double norm_etaPV = Etapv.Norm();
+//     if (sqrt(norm_eta*norm_eta+norm_etaPV*norm_etaPV)< eta_criterion)
+//     {
+//       break;
+//     }
+//     if (norm_eta > 1e12 or std::abs(Elast) > 1e9) // This is obviously going nowhere...
+//     {
+//       std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//       std::cout << "!!!!!!!!!!!  Norm of eta is " << norm_eta << " E0 = " << Elast << "  things are clearly broken. Giving up." << std::endl;
+//       std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//       FlowingOps[0] *= 1.0 / 0.0;
+//       break;
+//     }
+//     double norm_omega = Omega.back().Norm();
+//     double norm_omegaPV = OmegaPV.back().Norm();
+//     if (sqrt(norm_omega*norm_omega+norm_omegaPV*norm_omegaPV) > omega_norm_max)
+//     {
+//       if (hunter_gatherer)
+//       {
+//         std::cout<<"Hunter-Gatherer not implemented for PV solver."<<std::endl;
+//         exit(0);
+//       }
+//       else
+//       {
+//         NewOmega_PV();
+//         std::cout<<"new omega"<<std::endl;
+//       }
+//       norm_omega = 0;
+//       norm_omegaPV = 0;
+//     }
+//     // ds should never be more than 1, as this is over-rotating
+//     // Also, since we check if ||Omega|| < omega_norm_max, if we choose ds so that ||Omega|| = omega_norm_max, then we become sensitive
+//     // to numerical precision details when evaluating the inequality and behavior becomes machine dependent. So we add 1e-5 to the omega_norm_max
+//     // option to ensure that we're definitely on one side of the inequality.
+//     if (magnus_adaptive)
+//         ds = std::min({norm_domega / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV), norm_domega / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV) / (sqrt(norm_omega * norm_omega + norm_omegaPV * norm_omegaPV) + 1.0e-9), (omega_norm_max + 1e-5) / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV), ds_max});
+//     ds = std::min(ds, smax - s);
+
+//     s += ds;
+//     Eta *= ds; // Here's the Euler step.
+//     Etapv *= ds;
+//     // accumulated generator (aka Magnus operator) exp(Omega) = exp(dOmega) * exp(Omega_last)
+//     std::tuple<Operator, Operator> Omega_tmp = BCH::BCH_ProductPV(Eta, Etapv, Omega.back(), OmegaPV.back());
+//     Omega.back() = std::get<0>(Omega_tmp);
+//     OmegaPV.back() = std::get<1>(Omega_tmp);
+//     // OmegaPV.back() = BCH::BCH_Product(Etapv, Omega.back());
+//     // transformed VPT = exp(Omega) H_0 exp(-Omega)
+//     std::cout << FlowingOpsPV[0].Norm() << std::endl;
+//     std::tuple<Operator, Operator> H_tmp;
+//         if ((Omega.size() + n_omega_written) < 2)
+//         {
+//             H_tmp = BCH::BCH_TransformPV(*H_0, *VPT_0, Omega.back(), OmegaPV.back());
+//             FlowingOpsPV[0] = std::get<1>(H_tmp);
+//         }
+//         else
+//         {
+//             H_tmp = BCH::BCH_TransformPV(H_saved, VPT_saved, Omega.back(), OmegaPV.back());
+//             FlowingOpsPV[0] = std::get<1>(H_tmp);
+//         }
+
+//     // if (norm_eta < 1.0 and generator.GetType() == "shell-model-atan")
+//     // {
+//     //   generatorPV.SetDenominatorCutoff(1e-6);
+//     // }
+
+//     generatorPV.Update(FlowingOps[0], FlowingOpsPV[0], Eta, Etapv);
+//     // Etapv.PrintOneBody();
+//     // Etapv.PrintTwoBody();
+
+//     // Write details of the flow
+//     // WriteFlowStatusPV(flowfile);
+//     WriteFlowStatusPV(std::cout);
+//     Elast = FlowingOps[0].ZeroBody;
+//   }
+//   //   WriteFlowStatusPV(std::cout);
+// }
+
 void IMSRGSolverPV::Solve_magnus_euler_PV()
 {
   istep = 0;
@@ -195,7 +417,6 @@ void IMSRGSolverPV::Solve_magnus_euler_PV()
   //   WriteFlowStatusPV(flowfile);
   WriteFlowStatusHeaderPV(std::cout);
   WriteFlowStatusPV(std::cout);
-
   for (istep = 1; s < smax; ++istep)
   {
     double norm_eta = Eta.Norm();
@@ -236,7 +457,6 @@ void IMSRGSolverPV::Solve_magnus_euler_PV()
     if (magnus_adaptive)
         ds = std::min({norm_domega / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV), norm_domega / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV) / (sqrt(norm_omega * norm_omega + norm_omegaPV * norm_omegaPV) + 1.0e-9), (omega_norm_max + 1e-5) / sqrt(norm_eta * norm_eta + norm_etaPV * norm_etaPV), ds_max});
     ds = std::min(ds, smax - s);
-
     s += ds;
     Eta *= ds; // Here's the Euler step.
     Etapv *= ds;
@@ -258,7 +478,6 @@ void IMSRGSolverPV::Solve_magnus_euler_PV()
         FlowingOps[0] = std::get<0>(H_tmp);
         FlowingOpsPV[0] = std::get<1>(H_tmp);
     }
-
     // if (norm_eta < 1.0 and generator.GetType() == "shell-model-atan")
     // {
     //   generatorPV.SetDenominatorCutoff(1e-6);
@@ -387,6 +606,61 @@ std::tuple<Operator, Operator> IMSRGSolverPV::Transform(Operator &&OpIn, Operato
     return Transform_Partial(OpIn, OpInPV, 0);
 }
 
+// std::tuple<Operator, Operator> IMSRGSolverPV::Transform_Partial(Operator &OpIn, Operator &OpInPV, int n)
+// {
+//     Operator OpOut = OpIn;
+//     Operator OpOutPV = OpInPV;
+//     if (OpOut.GetParticleRank() == 1)
+//     {
+//         OpOut.SetParticleRank(2);
+//     }
+       
+//     if (OpOutPV.GetParticleRank() == 1)
+//     {
+//         OpOutPV.SetParticleRank(2);
+//     }
+        
+//     if (scratchdir != "")
+//     {
+//         for (int i = n; i < n_omega_written; i++)
+//         {
+//             // Operator omega(Eta);
+//             Operator omegaPV(Etapv);
+//             // Read Omega
+//             // std::ostringstream filename;
+//             // filename << scratchdir.c_str() << "/OMEGA_" << std::setw(6) << std::setfill('0') << getpid() << std::setw(3) << std::setfill('0') << i;
+//             // std::cout << "Transforming using " << filename.str() << std::endl;
+//             // std::ifstream ifs(filename.str(), std::ios::binary);
+//             // omega.ReadBinary(ifs);
+//             // Read OmegaPV
+//             std::ostringstream filenamePV;
+//             filenamePV << scratchdir.c_str() << "/OMEGAPV_" << std::setw(6) << std::setfill('0') << getpid() << std::setw(3) << std::setfill('0') << i;
+//             std::cout << "Transforming using " << filenamePV.str() << std::endl;
+//             std::ifstream ifsPV(filenamePV.str(), std::ios::binary);
+//             omegaPV.ReadBinary(ifsPV);
+//             // std::tuple<Operator, Operator> Op_tmp = BCH::BCH_TransformPV(OpOut, OpOutPV, omega, omegaPV);
+//             // OpOut = std::get<0>(Op_tmp);
+//             // OpOutPV = std::get<1>(Op_tmp);
+//             OpOut = BCH::BCH_Transform(OpOutPV, omegaPV);
+//             // std::cout << "norm of omega = " << omega.Norm() << "norm of omegaPV = "<<omegaPV.Norm()<< std::endl;
+//             // std::cout << " op zero body = " << OpOut.ZeroBody << " opPV zero body = " << OpOutPV.ZeroBody << std::endl;
+//             std::cout << "norm of omegaPV = "<<omegaPV.Norm()<< std::endl;
+//             std::cout << " op zero body = " << OpOut.ZeroBody  << std::endl;
+//         }
+//     }
+
+//     for (size_t i = std::max(n - n_omega_written, 0); i < Omega.size(); ++i)
+//     {
+//         std::tuple<Operator, Operator> Op_tmp = BCH::BCH_TransformPV(OpOut, OpOutPV, Omega[i], OmegaPV[i]);
+//         OpOut = std::get<0>(Op_tmp);
+//         OpOutPV = std::get<1>(Op_tmp);
+//         std::cout << i << std::endl;
+//         OpOut = BCH::BCH_Transform(OpInPV, OmegaPV[i]);
+//     }
+
+//     return {OpOut, OpOutPV};
+// }
+
 std::tuple<Operator, Operator> IMSRGSolverPV::Transform_Partial(Operator &OpIn, Operator &OpInPV, int n)
 {
     Operator OpOut = OpIn;
@@ -437,6 +711,7 @@ std::tuple<Operator, Operator> IMSRGSolverPV::Transform_Partial(Operator &OpIn, 
     return {OpOut, OpOutPV};
 }
 
+
 std::tuple<Operator, Operator> IMSRGSolverPV::Transform_Partial(Operator &&OpIn, Operator &&OpInPV, int n)
 {
     
@@ -467,7 +742,7 @@ std::tuple<Operator, Operator> IMSRGSolverPV::Transform_Partial(Operator &&OpIn,
             std::cout << " op zero body = " << OpOut.ZeroBody << " opPV zero body = " << OpOutPV.ZeroBody << std::endl;
         }
     }
-
+    
     for (size_t i = std::max(n - n_omega_written, 0); i < Omega.size(); ++i)
     {
         std::tuple<Operator, Operator> Op_tmp = BCH::BCH_TransformPV(OpOut, OpOutPV, Omega[i], OmegaPV[i]);

@@ -220,6 +220,7 @@ PYBIND11_MODULE(pyIMSRG, m)
           .def("GetTwoBodyDimension", &Operator::GetTwoBodyDimension)
           .def("ScaleOneBody", &Operator::ScaleOneBody)
           .def("ScaleTwoBody", &Operator::ScaleTwoBody)
+          .def("Erase", &Operator::Erase)
           .def("EraseOneBody", &Operator::EraseOneBody)
           .def("EraseTwoBody", &Operator::EraseTwoBody)
           .def("EraseThreeBody", &Operator::EraseThreeBody)
@@ -249,7 +250,7 @@ PYBIND11_MODULE(pyIMSRG, m)
                { self.PrintTwoBody(ch); })
           .def("PrintTwoBody_chch", [](Operator &self, int ch_bra, int ch_ket)
                { self.PrintTwoBody(ch_bra, ch_ket); })
-          .def("PrintThreeBody", &Operator::PrintThreeBody )
+          .def("PrintThreeBody", &Operator::PrintThreeBody)
           //      .def("PrintTwoBody_ch", &Operator::PrintTwoBody)
           .def("MakeReduced", &Operator::MakeReduced)
           .def("MakeNotReduced", &Operator::MakeNotReduced)
@@ -261,8 +262,8 @@ PYBIND11_MODULE(pyIMSRG, m)
           .def("GetTRank", &Operator::GetTRank)
           .def("GetParity", &Operator::GetParity)
           .def("GetNumberLegs", &Operator::GetNumberLegs)
-//          .def("GetE3max", &Operator::GetE3max)
-//          .def("SetE3max", &Operator::SetE3max)
+          //          .def("GetE3max", &Operator::GetE3max)
+          //          .def("SetE3max", &Operator::SetE3max)
           .def("PrintTimes", &Operator::PrintTimes)
           .def("Size", &Operator::Size)
           .def("MakeNormalized", &Operator::MakeNormalized)
@@ -651,6 +652,7 @@ PYBIND11_MODULE(pyIMSRG, m)
           .def("GetOperatorPV", &IMSRGSolverPV::GetOperatorPV)
           .def("GetVPT_s", &IMSRGSolverPV::GetVPT_s)
           .def("SetGeneratorPV", &IMSRGSolverPV::SetGeneratorPV)
+          .def("SetOmegaPV", &IMSRGSolverPV::SetOmegaPV, py::arg("index"), py::arg("Omega"))
           .def("SetOnly1bEta", [](IMSRGSolverPV &self, bool tf)
                { self.GetGeneratorPV().SetOnly1bEta(tf); })
           .def("Transform", [](IMSRGSolverPV &self, Operator &op, Operator &opPV)
@@ -663,7 +665,8 @@ PYBIND11_MODULE(pyIMSRG, m)
           .def("SetUseIsospinAveraging", &Generator::SetUseIsospinAveraging, py::arg("tf"))
           .def("Update", &Generator::Update, py::arg("H"), py::arg("Eta"))
           .def("GetHod_SingleRef", &Generator::GetHod_SingleRef, py::arg("H"))
-          .def("GetHod", &Generator::GetHod, py::arg("H"));
+          .def("GetHod", &Generator::GetHod, py::arg("H"))
+          .def("SetOnly1bEta", &Generator::SetOnly1bEta, py::arg("tf"));
 
       py::class_<GeneratorPV, Generator>(m, "GeneratorPV")
           .def(py::init<>())
@@ -719,6 +722,7 @@ PYBIND11_MODULE(pyIMSRG, m)
        Commutator.def("comm220ss", &Commutator::comm220ss);
        Commutator.def("comm111ss", &Commutator::comm111ss);
        Commutator.def("comm121ss", &Commutator::comm121ss);
+       Commutator.def("comm121_OD_ss", &Commutator::comm121_OD_ss);
        Commutator.def("comm221ss", &Commutator::comm221ss);
        Commutator.def("comm122ss", &Commutator::comm122ss);
        Commutator.def("comm222_pp_hh_221ss", &Commutator::comm222_pp_hh_221ss);
@@ -797,7 +801,10 @@ PYBIND11_MODULE(pyIMSRG, m)
 
       py::module BCH = m.def_submodule("BCH", "BCH namespace");
        BCH.def("BCH_Transform", &BCH::BCH_Transform);
+       BCH.def("BCH_Transform_Product", &BCH::Standard_BCH_Transform_Product);
        BCH.def("BCH_Product", &BCH::BCH_Product);
+       BCH.def("BCH_TransformPV", &BCH::BCH_TransformPV);
+       BCH.def("BCH_ProductPV", &BCH::BCH_ProductPV);
        BCH.def("SetUseFactorizedCorrection", &BCH::SetUseFactorizedCorrection);
        BCH.def("SetUseFactorizedCorrectionBCH_product", &BCH::SetUseFactorizedCorrectionBCH_product);
        BCH.def("SetUseFactorized_Correct_ZBTerm", &BCH::SetUseFactorized_Correct_ZBTerm);

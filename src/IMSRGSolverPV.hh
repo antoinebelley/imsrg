@@ -29,6 +29,7 @@ public:
   void SetMethod(std::string m) { method = m; };
   void SetGeneratorPV(std::string g);
   void SetFlowFilePV(std::string s);
+  void SetOmegaPV(size_t i, Operator &om);
   void WriteFlowStatusPV(std::ostream &);
   void WriteFlowStatusHeaderPV(std::ostream &);
   void WriteFlowStatusPV(std::string);

@@ -49,6 +49,7 @@ namespace imsrg_util
  Operator E0Op(ModelSpace& modelspace);
  Operator J2Op(ModelSpace& modelspace);
  Operator AnapoleMoment(ModelSpace &modelspace);
+ Operator AnapoleMomentAxial(ModelSpace &modelspace, std::string pn);
  Operator MultipoleResponseOp(ModelSpace &modelspace, int rL, int YL, int isospin);
  Operator IVDipoleOp(ModelSpace& modelspace, int rL, int YL);
  Operator ISDipoleOp(ModelSpace& modelspace, int rL, int YL, double Rms);

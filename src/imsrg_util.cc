@@ -127,6 +127,9 @@ namespace imsrg_util
       else if (opname == "LdotS")         theop =  LdotS_Op( modelspace);
       else if (opname == "DGT")           theop = M0nu::DGT_Op(modelspace);
       else if (opname == "Anapole")       theop = AnapoleMoment(modelspace);
+      else if (opname == "AnapoleAxial")  theop = AnapoleMomentAxial(modelspace,"both");
+      else if (opname == "AnapoleAxial_p") theop = AnapoleMomentAxial(modelspace,"proton");
+      else if (opname == "AnapoleAxial_n") theop = AnapoleMomentAxial(modelspace,"neutron");
       else if (opnamesplit[0] =="VGaus")
       {
          double sigma = 1.0;
@@ -1931,6 +1934,43 @@ Operator J2Op(ModelSpace &modelspace)
        // Including the factor of sqrt(4pi/3) from the spherical harmonics
        As.OneBody(i, j) = 3 * sqrt(2) * magnetic_moment * r2int * hatfactors * nineJ * modelspace.phase(oi.l) * AngMom::ThreeJ(oi.l, 1.0, oj.l, 0, 0, 0);
        As.OneBody(j, i) = -modelspace.phase((oi.j2 - oj.j2) / 2) * As.OneBody(i, j); // Operator is imagniary and therefore antisymmetric, reduced ME need a phase under hermitian conjugation
+     }
+   }
+   return As;
+ }
+
+ /// Ananople moment operator -- added by A. B.
+ // Comes from operator \mu_i r x \sigma see PhysRevA.102.052828
+ // factor of -i sqrt(2) from r x \sigma = -i sqrt(2) r [Y1 x sigma]^{1}
+ // is not included
+ Operator AnapoleMomentAxial(ModelSpace &modelspace, std::string pn)
+ {
+   Operator As(modelspace, 1, 0, 0, 2);
+   As.SetHermitian();
+   double bL = pow(HBARC * HBARC / M_NUCLEON / modelspace.GetHbarOmega(), 0.5); // b^L where b=sqrt(hbar/mw)
+   int norbits = modelspace.GetNumberOrbits();
+   for (int i = 0; i < norbits; ++i)
+   {
+     Orbit &oi = modelspace.GetOrbit(i);
+     if (pn == "proton" and oi.tz2 > 0)  continue;
+     if (pn == "neutron" and oi.tz2 < 0) continue;
+     double ji = 0.5 * oi.j2;
+     for (int j : As.OneBodyChannels.at({oi.l, oi.j2, oi.tz2}))
+     {
+       if (j < i)
+         continue;
+       Orbit &oj = modelspace.GetOrbit(j);
+       if (oi.l != oj.l)
+         continue; //  \delta_ll' are allowed
+       if (oi.tz2 != oj.tz2)
+         continue; // Should already be enforced by OneBodyChannels, but just to be sure
+       double jj = 0.5 * oj.j2;
+       if (abs(ji - jj) > As.GetJRank() or (ji + jj) < As.GetJRank())
+         continue; // angular momentum selection rules
+       double hatfactors = sqrt((2.0 * ji + 1.0) * (2.0 * jj + 1.0));
+       double sixj = modelspace.GetSixJ(0.5, 0.5, 1, ji, jj, oi.l);
+       As.OneBody(i, j) = oi.tz2*hatfactors*sqrt(6)*sixj* modelspace.phase(oi.l+ji+1.5);
+       As.OneBody(j, i) = modelspace.phase((oi.j2 - oj.j2) / 2) * As.OneBody(i, j); // Operator is imagniary and therefore antisymmetric, reduced ME need a phase under hermitian conjugation
      }
    }
    return As;

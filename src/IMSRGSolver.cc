@@ -104,6 +104,7 @@ void IMSRGSolver::GatherOmega()
     Omega.emplace_back(last);
     Omega.back().Erase(); // SRS: in this case the hunter should be zero. Fixes bug found by Matthias Heinz July 2024.
   }
+  std::cout<< "Omega length = " << Omega.size() << std::endl;
   // the last omega in the list is the hunter. the one just preceeding it is the gatherer.
   auto &hunter = Omega.back();
   auto &gatherer = Omega[Omega.size() - 2];
@@ -113,10 +114,13 @@ void IMSRGSolver::GatherOmega()
   }
   hunter.Erase();
   H_saved = *H_0;
+  std::cout << "H_0 Norm = " << H_0 -> Norm() << "H_saved Norm = " << H_saved.Norm() << std::endl;
   for (size_t i = 0; i < Omega.size() - 1; i++)
   {
+    std::cout << "Applying Omega " << i << " to H_saved. Omega norm = " << Omega[i].Norm() << std::endl;
     H_saved = BCH::BCH_Transform(H_saved, Omega[i]);
   }
+  std::cout << "H_0 Norm = " << H_0->Norm() << "H_saved Norm = " << H_saved.Norm() << std::endl;
 }
 
 void IMSRGSolver::SetHin(Operator &H_in)

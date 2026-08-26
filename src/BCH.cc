@@ -202,7 +202,9 @@ namespace BCH
         }
         epsilon *= i + 1;
         if (OpNested.Norm() < epsilon)
+        {
           break;
+        }
         if (i == warn_iter)
           std::cout << "Warning: BCH_Transform not converged after " << warn_iter << " nested commutators" << std::endl;
         else if (i == max_iter)
@@ -214,6 +216,86 @@ namespace BCH
     OpIn.profiler.timer[__func__] += omp_get_wtime() - t_start;
     return OpOut;
   }
+
+  // X.BCH_Transform(Y) returns \f$ Z = e^{W}e^{Y} X e^{-Y} e^{-W}\f$.
+  /// We use the [Baker-Campbell-Hausdorff formula](http://en.wikipedia.org/wiki/Baker-Campbell-Hausdorff_formula)
+  /// \f[ Z = X + [Y,X] + \frac{1}{2!}[Y,[Y,X]] + \frac{1}{3!}[Y,[Y,[Y,X]]] + \ldots \f]
+  /// with all commutators truncated at the two-body level.
+  Operator Standard_BCH_Transform_Product(const Operator &OpIn, const Operator &Omega1, const Operator &Omega2)
+  {
+    double t_start = omp_get_wtime();
+    int max_iter = 40;
+    int warn_iter = 12;
+    double nx = OpIn.Norm();
+    double ny1 = Omega1.Norm();
+    double ny2 = Omega2.Norm();
+    Operator OpOut = OpIn;
+    if ((OpOut.GetNumberLegs() % 2 == 0) and OpOut.GetParticleRank() < 2)
+    {
+      OpOut.SetParticleRank(2);
+    }
+    if (OpOut.GetJRank() == 0 and (OpOut.GetTRank() != 0 or OpOut.GetParity() != 0) and OpOut.IsReduced() == false)
+    {
+      OpOut.MakeReduced();
+    }
+    double factorial_denom = 1.0;
+    Operator OpOut_temp = Standard_BCH_Transform(OpIn, Omega2);
+    OpOut_temp -= OpIn;
+    if (nx > bch_transform_threshold)
+    {
+      //     Operator OpNested = OpIn;
+      Operator OpNested = OpOut;
+//      Operator OpNested_last = OpOut*0;
+//      Operator OpNested_last_last = OpOut*0;
+//      Operator OpNested_last_last_last = OpOut*0;
+      double epsilon = nx * exp(-2 * ny1) * bch_transform_threshold / (2 * ny1); // this should probably be explained somewhere...
+      
+      for (int i = 1; i <= max_iter; ++i)
+      {
+        OpNested = Commutator::Commutator(Omega1, OpNested); // the ith nested commutator
+        Operator OpNested_temp = OpNested;
+        factorial_denom /= i;
+        double factorial_product = factorial_denom;
+        for (int j = 1; j <= max_iter - i; ++j)
+        {
+          OpNested_temp = Commutator::Commutator(Omega2, OpNested_temp); // the ith nested commutator
+          factorial_product /= j;
+          OpOut += factorial_product * OpNested_temp;
+        }
+        
+
+        OpOut += factorial_denom * OpNested;
+
+        if (OpOut.rank_J > 0)
+        {
+          auto id5 = OpOut.modelspace->GetOrbitIndex(0,2,5,+1);
+          std::cout << "Tensor BCH, i=" << i << "  Norm = " << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.OneBodyNorm() << " "
+                    << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.TwoBodyNorm() << " "
+                    << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.ThreeBody.Norm() << " "
+                    << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.Norm() << std::endl;
+//                    << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.Norm() << "    d5d5 = " << OpNested.OneBody(id5,id5) << " sum " << OpOut.OneBody(id5,id5) << std::endl;
+        }
+        epsilon *= i + 1;
+        if (OpNested.Norm() < epsilon)
+        {
+          break;
+        }
+        if (i == warn_iter)
+          std::cout << "Warning: BCH_Transform not converged after " << warn_iter << " nested commutators" << std::endl;
+        else if (i == max_iter)
+          std::cout << "Warning: BCH_Transform didn't coverge after " << max_iter << " nested commutators" << std::endl;
+      }
+    }
+    OpOut += OpOut_temp;
+    //   std::cout << "Done with BCH_Transform, 3-body norm of OpOut = " << OpOut.ThreeBodyNorm() << std::endl;
+//    OpIn.profiler.timer["BCH_Transform"] += omp_get_wtime() - t_start;
+    OpIn.profiler.timer[__func__] += omp_get_wtime() - t_start;
+    return OpOut;
+  }
+
+
+
+
 
   //  Update the auxiliary one-body operator chi, using Omega and the ith nested commutator
   //  This has not been tested for tensor commutators, but it *should* work.
@@ -418,20 +500,21 @@ namespace BCH
     Operator Z = X + Y;
     Operator ZPV = XPV+YPV;
 
-    
+    // std::cout << "Norm of [Y,X] = " << (Commutator::Commutator(Y, X)).Norm() << "  Norm of [YPV,X] = " << (Commutator::Commutator(YPV, X)).Norm() << "  Norm of [Y,XPV] = " << (Commutator::Commutator(Y, XPV)).Norm() << "  Norm of [YPV,XPV] = " << (Commutator::Commutator(YPV, XPV)).Norm() << std::endl;
     Operator Nested = Commutator::Commutator(Y, X) + Commutator::Commutator(YPV, XPV); // [Y,X]
     Operator NestedPV = Commutator::Commutator(YPV, X) + Commutator::Commutator(Y, XPV); // [Y,X]
 
     double nxy = Nested.Norm();
     double nxyPV = NestedPV.Norm();
+    
     // We assume X is small, but just in case, we check if we should include the [X,[X,Y]] term.
     if (sqrt(nxy * nx* nxy * nx + nxyPV * nxyPV * nxPV * nxPV) > bch_product_threshold)
     {
       Z += (1. / 12) * (Commutator::Commutator(Nested, X)+Commutator::Commutator(NestedPV,XPV));
       ZPV += (1. / 12) * (Commutator::Commutator(NestedPV, X)+Commutator::Commutator(Nested,XPV));
     }
-
     
+
     size_t k = 1;
     // k=1 adds 1/2[X,Y],  k=2 adds 1/12 [Y,[Y,X]], k=4 adds -1/720 [Y,[Y,[Y,[Y,X]]]], and so on.
     //   while( Nested.Norm() > bch_product_threshold and k<9)
@@ -448,7 +531,6 @@ namespace BCH
         break; // don't evaluate the commutator if we're not going to use it
       if (2 * sqrt(ny * nxy * ny * nxy + nyPV * nyPV * nxyPV * nxyPV) < bch_product_threshold)
         break;
-
       Operator Optmp = Commutator::Commutator(Y, Nested) + Commutator::Commutator(YPV, NestedPV);
       Operator OptmpPV = Commutator::Commutator(YPV, Nested) + Commutator::Commutator(Y, NestedPV);
       Nested = Optmp;
@@ -502,7 +584,6 @@ namespace BCH
     {
       OpOutPV.MakeReduced();
     }
-
     double factorial_denom = 1.0;
 
     
@@ -520,7 +601,7 @@ namespace BCH
         //                              = [Omega, Htilde]_3b,  where Htilde = H + 1/2![Omega,H] + 1/3![Omega,[Omega,H]] + ...
         if (bch_skip_ieq1 and i == 1)
           continue;
-        Operator Optmp = Commutator::Commutator(OmegaPV, OpNestedPV) + Commutator::Commutator(Omega, OpNested)  ;
+        Operator Optmp = Commutator::Commutator(OmegaPV, OpNestedPV) + Commutator::Commutator(Omega, OpNested);
         Operator OptmpPV = Commutator::Commutator(OmegaPV, OpNested) + Commutator::Commutator(Omega, OpNestedPV);
         OpNested = Optmp; // the ith nested commutator
         OpNestedPV = OptmpPV;
