@@ -1515,20 +1515,20 @@ namespace M0nu
       }
       sort(KEYS.begin(), KEYS.end());
       KEYS.erase(unique(KEYS.begin(), KEYS.end()), KEYS.end());
-#pragma omp parallel for schedule(dynamic, 1)
-    for (size_t i = 0; i < KEYS.size(); i++)
-    {
-      uint64_t key = KEYS[i];
-      uint64_t n, l, np, lp, S, J;
-      IntUnHash(key, n, l, np, lp, S, J);
+      #pragma omp parallel for schedule(dynamic, 1)   
+      for (size_t i = 0; i < KEYS.size(); i++)
+      {
+        uint64_t key = KEYS[i];
+        uint64_t n, l, np, lp, S, J;
+        IntUnHash(key, n, l, np, lp, S, J);
 
-      double integral = dq_pp(n, l, np, lp, S, J, hw, pwd, index_p, index_pp);
-      IntList[key] = integral; // these have been ordered by the above loops such that we take the "lowest" value of decimalgen(n,l,np,lp,maxl,maxnp,maxlp), see GetIntegral(...)
-    }
-    std::cout << "IntList has " << IntList.bucket_count() << " buckets and a load factor " << IntList.load_factor()
-              << ", estimated storage ~= " << ((IntList.bucket_count() + IntList.size()) * (sizeof(size_t) + sizeof(void *))) / (1024.0 * 1024.0 * 1024.0) << " GB" << std::endl; // copied from (RS)
-    // profiler.timer["PreCalculateM0nuIntegrals"] += omp_get_wtime() - t_start_pci;                                                                                                 // profiling (r)
-    return IntList;
+        double integral = dq_pp(n, l, np, lp, S, J, hw, pwd, index_p, index_pp);
+        IntList[key] = integral; // these have been ordered by the above loops such that we take the "lowest" value of decimalgen(n,l,np,lp,maxl,maxnp,maxlp), see GetIntegral(...)
+      }
+      std::cout << "IntList has " << IntList.bucket_count() << " buckets and a load factor " << IntList.load_factor()
+                << ", estimated storage ~= " << ((IntList.bucket_count() + IntList.size()) * (sizeof(size_t) + sizeof(void *))) / (1024.0 * 1024.0 * 1024.0) << " GB" << std::endl; // copied from (RS)
+      // profiler.timer["PreCalculateM0nuIntegrals"] += omp_get_wtime() - t_start_pci;                                                                                                 // profiling (r)
+      return IntList;
   }
 
   Operator TwoBody_Scalar_integrand(ModelSpace &modelspace, PWD &pwd, int Jrank, int Lrank, int index_p, int index_pp, int Smin = 0, int Smax = 1)
@@ -1566,7 +1566,7 @@ namespace M0nu
       int nkets = tbc_ket.GetNumberKets();                           // get the number of kets
       int J = tbc_bra.J;                                             // NOTE: by construction, J := J_ab == J_cd := J'
       double Jhat = sqrt(2 * J + 1);                                 // We are computing reduced matrix elements
-#pragma omp parallel for schedule(dynamic, 1)                        // need to do: PreCalculateMoshinsky() and PreCalcIntegrals() [above] and then "#pragma omp critical" [below]
+      #pragma omp parallel for schedule(dynamic, 1)                        // need to do: PreCalculateMoshinsky() and PreCalcIntegrals() [above] and then "#pragma omp critical" [below]
       for (int ibra = 0; ibra < nbras; ibra++)
       {
         Ket &bra = tbc_bra.GetKet(ibra);     // get the final state = <ab|

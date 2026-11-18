@@ -49,11 +49,13 @@ ELEM = ['n', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N',
 ARGS = {}
 
 # Maximum value of s, and maximum step size ds
-ARGS['smax'] = '0'
+ARGS['smax'] = '500'
 ARGS['dsmax'] = '0.5'
-ARGS['basis'] = "oscillator"
+# ARGS['basis'] = "oscillator"
+ARGS['basis'] = "HF"
 # ARGS['NAT_order'] = 'energy'
 # ARGS['use_NAT_occupations'] = 'true'  # Use NAT occupations for the valence space
+ARGS['freeze_occupations'] = "true"
 
 # Norm of Omega at which we split off and start a new transformation
 ARGS['omega_norm_max'] = '0.25'
@@ -117,23 +119,23 @@ time srun %s
 
 
 #Set the interaction files 
-# ARGS['2bme'] = '/Users/antoinebelley/Documents/TRIUMF/Interactions/TwBME-HO_NN-only_N3LO_EM500_srg1.80_hw16_emax18_e2max36.me2j.gz'
-# ARGS['3bme'] = '/Users/antoinebelley/Documents/TRIUMF/Interactions/NO2B_ThBME_EM1.8_2.0_3NFJmax15_IS_hw16_ms18_36_24.stream.bin'
-# ARGS['LECs'] = 'EM1.8_2.0'
-ARGS['2bme'] = 'none'
-ARGS['3bme'] = 'none'
-ARGS['LECs'] = 'none'
+ARGS['2bme'] = '/Users/antoinebelley/Documents/TRIUMF/Interactions/TwBME-HO_NN-only_N3LO_EM500_srg1.80_hw16_emax18_e2max36.me2j.gz'
+ARGS['3bme'] = '/Users/antoinebelley/Documents/TRIUMF/Interactions/NO2B_ThBME_EM1.8_2.0_3NFJmax15_IS_hw16_ms18_36_24.stream.bin'
+ARGS['LECs'] = 'EM1.8_2.0'
+# ARGS['2bme'] = 'none'
+# ARGS['3bme'] = 'none'
+# ARGS['LECs'] = 'none'
 # Model space parameters used for reading Darmstadt-style interaction files
-# ARGS['file2e1max'] = '18 file2e2max=36 file2lmax=18'
-# ARGS['file3e1max'] = '18 file3e2max=36 file3e3max=24'
-ARGS['file2e1max'] = '0 file2e2max=0 file2lmax=0'
-ARGS['file3e1max'] = '0 file3e2max=0 file3e3max=0'
+ARGS['file2e1max'] = '18 file2e2max=36 file2lmax=18'
+ARGS['file3e1max'] = '18 file3e2max=36 file3e3max=24'
+# ARGS['file2e1max'] = '0 file2e2max=0 file2lmax=0'
+# ARGS['file3e1max'] = '0 file3e2max=0 file3e3max=0'
 ARGS["3bme_type"] = "no2b"
 # ARGS["no2b_precision"] = "half"
 
 # Loop over multiple jobs to submit
-for Z in range(2,3):
- A = 4
+for Z in range(7,8):
+ A = 14
  for reference in ['%s%d' % (ELEM[Z], A)]:
   ARGS['reference'] = reference
   print('Z = ', Z)
@@ -141,7 +143,7 @@ for Z in range(2,3):
    for hw in [16]:
 
      ARGS['emax'] = '%d' % e
-     ARGS['e3max'] = '12'
+     ARGS['e3max'] = '24'
     #  ARGS['emax_imsrg'] = 2
 
      # Delta
@@ -167,7 +169,7 @@ for Z in range(2,3):
     #  ARGS['BetaCM'] = '1'
     #  ARGS['denominator_delta'] = '10'
      # ARGS['custom_valence_space'] = 'Ni56,p0f5,n0f5,p1p3,n1p3,p1p1,n1p1,p0g9,n0g9'  # AKA: Ni56 core with jj44pn
-    #  ARGS['Operators'] = 'Anapole'
+     ARGS['Operators'] = 'Fermi'
 
     
     # Make an estimate of how much time to request. Only used for slurm at the moment.
