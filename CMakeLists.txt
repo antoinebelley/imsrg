@@ -41,7 +41,7 @@ if(IMSRG_BUILD_PYTHON_BINDINGS)
 endif()
 
 add_subdirectory(src)
-add_subdirectory(extern)
+add_subdirectory(src/extern)
 if(IMSRG_BUILD_PYTHON_BINDINGS)
     pybind11_add_module(pyIMSRG src/pyIMSRG.cc)
     target_link_libraries(
@@ -49,6 +49,11 @@ if(IMSRG_BUILD_PYTHON_BINDINGS)
         PRIVATE
         IMSRG
     )
+    set_target_properties(pyIMSRG PROPERTIES SUFFIX ".so")
+    set_target_properties(pyIMSRG PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    add_custom_command(TARGET pyIMSRG PRE_LINK
+                       COMMAND ${CMAKE_COMMAND} -E remove -f $<TARGET_FILE:pyIMSRG>
+                       COMMENT "Unlinking old shared library to prevent SIGBUS on running jobs" )
     #ADD tests to be run directly in the build process
     enable_testing()
     add_test (

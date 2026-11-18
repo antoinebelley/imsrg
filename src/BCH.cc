@@ -1,6 +1,7 @@
 
 #include "BCH.hh"
 #include "Commutator.hh"
+#include <iomanip> // for setw, setprecision
 
 namespace BCH
 {
@@ -109,6 +110,10 @@ namespace BCH
     {
       OpOut.SetParticleRank(2);
     }
+//    if (OpOut.GetJRank() == 0  and OpOut.IsReduced() )
+//    {
+//      OpOut.MakeNotReduced();
+//    }
     if (OpOut.GetJRank() == 0 and (OpOut.GetTRank() != 0 or OpOut.GetParity() != 0) and OpOut.IsReduced() == false)
     {
       OpOut.MakeReduced();
@@ -198,7 +203,6 @@ namespace BCH
                     << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.TwoBodyNorm() << " "
                     << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.ThreeBody.Norm() << " "
                     << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.Norm() << std::endl;
-//                    << std::setw(12) << std::setprecision(8) << std::fixed << OpNested.Norm() << "    d5d5 = " << OpNested.OneBody(id5,id5) << " sum " << OpOut.OneBody(id5,id5) << std::endl;
         }
         epsilon *= i + 1;
         if (OpNested.Norm() < epsilon)

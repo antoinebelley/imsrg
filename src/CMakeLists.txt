@@ -24,6 +24,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(IMSRGPLUSPLUS_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(USE_ARMADILLO_EXTERN)
+    list(APPEND ARMADILLO_LIBS armadillo)
+else()
+    list(APPEND ARMADILLO_LIBS ${ARMADILLO_LIBRARIES})
+endif()
+
+add_subdirectory(Commutator)
+add_subdirectory(ReferenceImplementations)
+add_subdirectory(ThreeBodyME)
+add_subdirectory(imsrg_util)
+
+# add_subdirectory(profiling)
 
 # Add a custom command that produces version.cpp, plus
 # a dummy output that's not actually produced, in order
@@ -34,16 +46,11 @@ ADD_CUSTOM_COMMAND(
     COMMAND ${CMAKE_COMMAND} -P
             ${CMAKE_CURRENT_SOURCE_DIR}/git_version.cmake)
 
-if(USE_ARMADILLO_EXTERN)
-    list(APPEND ARMADILLO_LIBS armadillo)
-else()
-    list(APPEND ARMADILLO_LIBS ${ARMADILLO_LIBRARIES})
-endif()
-
 
 add_library(
-    AngMom
+    AngMom  OBJECT
     AngMom.hh AngMom.cc
+    AngMomCache.hh AngMomCache.cc
 )
 target_link_libraries(
     AngMom
@@ -51,18 +58,9 @@ target_link_libraries(
     GSL::gsl
 )
 
-add_library(
-    AngMomCache
-    AngMomCache.hh AngMomCache.cc
-)
-target_link_libraries(
-    AngMomCache
-    PRIVATE
-    AngMom
-)
 
 add_library(
-    IMSRGProfiler
+    IMSRGProfiler OBJECT
     IMSRGProfiler.hh IMSRGProfiler.cc
 )
 target_link_libraries(
@@ -72,7 +70,7 @@ target_link_libraries(
 )
 
 add_library(
-    ModelSpace
+    ModelSpace  OBJECT
     ModelSpace.hh ModelSpace.cc
     TwoBodyChannel.cc
     ThreeBodyChannel.cc
@@ -82,7 +80,7 @@ target_link_libraries(
     PUBLIC
     ${ARMADILLO_LIBS}
     IMSRGProfiler
-    AngMomCache
+    AngMom
     PRIVATE
     OpenMP::OpenMP_CXX
 )
@@ -90,10 +88,11 @@ target_link_libraries(
 add_library(
     PhysicalConstants
     INTERFACE
+    PhysicalConstants.hh
 )
 
 add_library(
-    TwoBodyME
+    TwoBodyME  OBJECT
     TwoBodyME.hh TwoBodyME.cc
 )
 target_link_libraries(
@@ -106,7 +105,7 @@ target_link_libraries(
 )
 
 add_library(
-    ThreeLegME
+    ThreeLegME OBJECT
     ThreeLegME.hh ThreeLegME.cc
 )
 target_link_libraries(
@@ -115,94 +114,37 @@ target_link_libraries(
     ${ARMADILLO_LIBS}
     ModelSpace
     PRIVATE
+    # ${ARMADILLO_LIBRARIES}
     PhysicalConstants
 )
 
-add_library(
-    ThreeBodyStorage
-    ThreeBodyStorage.hh ThreeBodyStorage.cc
-)
-target_link_libraries(
-    ThreeBodyStorage
-    PUBLIC
-    ModelSpace
-)
 
-add_library(
-    ThreeBodyStorage_pn
-    ThreeBodyStorage_pn.hh ThreeBodyStorage_pn.cc
-)
-target_link_libraries(
-    ThreeBodyStorage_pn
-    PUBLIC
-    ThreeBodyStorage
-    PRIVATE
-    AngMom
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    ThreeBodyStorage_no2b
-    ThreeBodyStorage_no2b.hh ThreeBodyStorage_no2b.cc
-)
-target_link_libraries(
-    ThreeBodyStorage_no2b
-    PUBLIC
-    IMSRGBoostZip
-    HalfPrecision
-    ModelSpace
-    ThreeBodyStorage
-    PRIVATE
-    AngMom
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    ThreeBodyStorage_mono
-    ThreeBodyStorage_mono.hh ThreeBodyStorage_mono.cc
-)
-target_link_libraries(
-    ThreeBodyStorage_mono
-    PUBLIC
-    IMSRGBoostZip
-    HalfPrecision
-    ModelSpace
-    ThreeBodyStorage
-    PRIVATE
-    AngMom
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    ThreeBodyStorage_iso
-    ThreeBodyStorage_iso.hh ThreeBodyStorage_iso.cc
-)
-target_link_libraries(
-    ThreeBodyStorage_iso
-    PUBLIC
-    ThreeBodyStorage
-    PRIVATE
-    AngMom
-)
-
-add_library(
-    ThreeBodyME
-    ThreeBodyME.hh ThreeBodyME.cc
-)
-target_link_libraries(
-    ThreeBodyME
-    PUBLIC
-    ModelSpace
-    ThreeBodyStorage
-    ThreeBodyStorage_iso
-    ThreeBodyStorage_pn
-    ThreeBodyStorage_no2b
-    ThreeBodyStorage_mono
-    PRIVATE
-    IMSRGProfiler
-    AngMom
-    OpenMP::OpenMP_CXX
-)
+#add_library(
+#    ThreeBodyME OBJECT
+#    ThreeBodyME.hh                           ThreeBodyME_dir/ThreeBodyME.cc
+#    ThreeBodyStorage.hh      ThreeBodyME_dir/ThreeBodyStorage.cc
+#    ThreeBodyME_dir/ThreeBodyStorage_pn.hh   ThreeBodyME_dir/ThreeBodyStorage_pn.cc
+#    ThreeBodyME_dir/ThreeBodyStorage_no2b.hh ThreeBodyME_dir/ThreeBodyStorage_no2b.cc
+#    ThreeBodyME_dir/ThreeBodyStorage_mono.hh ThreeBodyME_dir/ThreeBodyStorage_mono.cc
+#    ThreeBodyME_dir/ThreeBodyStorage_iso.hh  ThreeBodyME_dir/ThreeBodyStorage_iso.cc
+#)
+#target_include_directories(
+#    ThreeBodyME
+#    PRIVATE
+#    ${CMAKE_CURRENT_SOURCE_DIR}
+#    ${CMAKE_CURRENT_SOURCE_DIR}/ThreeBodyME_dir
+#)
+#target_link_libraries(
+#    ThreeBodyME
+#    PUBLIC
+#    ModelSpace
+#    IMSRGBoostZip
+#    HalfPrecision
+#    PRIVATE
+#    IMSRGProfiler
+#    AngMom
+#    OpenMP::OpenMP_CXX
+#)
 
 add_library(
     Parameters
@@ -210,8 +152,13 @@ add_library(
 )
 
 add_library(
-    Operator
+    Operator  OBJECT
     Operator.hh Operator.cc
+)
+target_include_directories(
+    Operator
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ThreeBodyME
 )
 target_link_libraries(
     Operator
@@ -230,7 +177,7 @@ target_link_libraries(
 )
 
 add_library(
-    Version
+    Version  OBJECT
     version.hh
     ${CMAKE_CURRENT_BINARY_DIR}/version.cc
 )
@@ -241,7 +188,7 @@ target_include_directories(
 )
 
 add_library(
-    ReadWrite
+    ReadWrite  OBJECT
     ReadWrite.hh ReadWrite.cc
 )
 target_compile_definitions(
@@ -265,7 +212,7 @@ target_link_libraries(
 )
 
 add_library(
-    BCH
+    BCH  OBJECT
     BCH.hh BCH.cc
 )
 target_link_libraries(
@@ -278,8 +225,9 @@ target_link_libraries(
 )
 
 add_library(
-    IMSRGSolver
+    IMSRGSolver  OBJECT
     IMSRGSolver.hh IMSRGSolver.cc
+    IMSRGSolverPV.hh IMSRGSolverPV.cc
 )
 target_link_libraries(
     IMSRGSolver
@@ -294,122 +242,44 @@ target_link_libraries(
     Boost::boost
 )
 
-add_library(
-    IMSRGSolverPV
-    IMSRGSolverPV.hh IMSRGSolverPV.cc
-)
-target_link_libraries(
-    IMSRGSolverPV
-    PUBLIC
-    IMSRGSolver
-    GeneratorPV
-    PRIVATE
-    Commutator
-)
+#add_library(
+#    IMSRGSolverPV  OBJECT
+#    IMSRGSolverPV.hh IMSRGSolverPV.cc
+#)
+#target_link_libraries(
+#    IMSRGSolverPV
+#    PUBLIC
+#    IMSRGSolver
+#    GeneratorPV
+#    PRIVATE
+#    Commutator
+#)
+
+#add_library(
+#    Commutator   OBJECT
+#    Commutator.hh Commutator.cc
+#    DaggerCommutators.hh DaggerCommutators.cc
+#    TensorCommutators.hh TensorCommutators.cc
+#    IMSRG3Commutators.hh IMSRG3Commutators.cc
+#    FactorizedDoubleCommutator.hh FactorizedDoubleCommutator.cc
+#)
+#target_link_libraries(
+#    Commutator
+#    PUBLIC
+#    armadillo
+#    Operator
+#    TwoBodyME
+#    ThreeLegME
+#    PRIVATE
+#    OpenMP::OpenMP_CXX
+#    # ${ARMADILLO_LIBRARIES}
+#    PhysicalConstants
+#    AngMom
+#)
+
 
 add_library(
-    Commutator232
-    Commutator232.hh Commutator232.cc
-)
-target_link_libraries(
-    Commutator232
-    PUBLIC
-    Operator
-    ModelSpace
-    PRIVATE
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    TensorCommutators
-    TensorCommutators.hh TensorCommutators.cc
-)
-target_link_libraries(
-    TensorCommutators
-    PUBLIC
-    Operator
-    ModelSpace
-    PRIVATE
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    IMSRG3Commutators
-    IMSRG3Commutators.hh IMSRG3Commutators.cc
-)
-target_link_libraries(
-    IMSRG3Commutators
-    PUBLIC
-    Operator
-    ModelSpace
-    PRIVATE
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    FactorizedDoubleCommutator
-    FactorizedDoubleCommutator.hh FactorizedDoubleCommutator.cc
-)
-target_link_libraries(
-    FactorizedDoubleCommutator
-    PUBLIC
-    Operator
-    ModelSpace
-    PRIVATE
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    DaggerCommutators
-    DaggerCommutators.hh DaggerCommutators.cc
-)
-target_link_libraries(
-    DaggerCommutators
-    PUBLIC
-    Operator
-    ModelSpace
-    PRIVATE
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    Commutator
-    Commutator.hh Commutator.cc
-)
-target_link_libraries(
-    Commutator
-    PUBLIC
-    ${ARMADILLO_LIBS}
-    Operator
-    TwoBodyME
-    ThreeLegME
-    PRIVATE
-    OpenMP::OpenMP_CXX
-    PhysicalConstants
-    Commutator232
-    TensorCommutators
-    IMSRG3Commutators
-    FactorizedDoubleCommutator
-    DaggerCommutators
-    AngMom
-)
-
-add_library(
-    DarkMatterNREFT
-    DarkMatterNREFT.hh DarkMatterNREFT.cc
-)
-target_link_libraries(
-    DarkMatterNREFT
-    PUBLIC
-    ModelSpace
-    Operator
-    PRIVATE
-    GSL::gsl
-    PhysicalConstants
-)
-
-add_library(
-    Jacobi3BME
+    Jacobi3BME OBJECT
     Jacobi3BME.hh Jacobi3BME.cc
 )
 target_link_libraries(
@@ -418,15 +288,12 @@ target_link_libraries(
     ModelSpace
     PRIVATE
     AngMom
-    # This is safe because HartreeFock is a private dep of Jacobi3BME.
-    # If both deps were public, we would have a problem.
-    HartreeFock
     IMSRGProfiler
     OpenMP::OpenMP_CXX
 )
 
 add_library(
-    HartreeFock
+    HartreeFock OBJECT
     HartreeFock.hh HartreeFock.cc
 )
 target_link_libraries(
@@ -445,117 +312,81 @@ target_link_libraries(
     PhysicalConstants
 )
 
-add_library(
-    GaussLaguerre
-    INTERFACE
-)
 
-# add_library(
-#     Helicity
-#     Helicity.hh Helicity.cc
-# )
 
-# target_link_libraries(
-#     Helicity
-#     PUBLIC
-#     GSL::gsl
-#     PhysicalConstants
-#     PRIVATE
-#     AngMom
 
-# )
-
-add_library(
-    Pwd
-    Pwd.hh Pwd.cc
-)
-
-target_link_libraries(
-    Pwd
-    PUBLIC
-    GSL::gsl
-    PhysicalConstants
-
-)
-
-add_library(
-    M0nu
-    M0nu.hh M0nu.cc
-)
-target_link_libraries(
-    M0nu
-    PUBLIC
-    OpenMP::OpenMP_CXX
-    GSL::gsl
-    ModelSpace
-    Operator
-    imsrg_util
-    PhysicalConstants
-    Pwd
-    PRIVATE
-    AngMom
-)
+#add_library(
+#    imsrg_util OBJECT
+#    imsrg_util.hh
+#    imsrg_util_dir/imsrg_util.cc
+#    imsrg_util_dir/GaussLaguerre.hh
+#    imsrg_util_dir/M0nu.hh
+#    imsrg_util_dir/M0nu.cc
+#    imsrg_util_dir/DarkMatterNREFT.hh
+#    imsrg_util_dir/DarkMatterNREFT.cc
+#    imsrg_util_dir/Pwd.hh
+#    imsrg_util_dir/Pwd.cc
+#    imsrg_util_dir/Atomic.cc
+##    Helicity.hh Helicity.cc
+#)
+#target_include_directories(
+#    imsrg_util
+#    PRIVATE
+#    ${CMAKE_CURRENT_SOURCE_DIR}
+#    ${CMAKE_CURRENT_SOURCE_DIR}/imsrg_util_dir
+#)
+#target_link_libraries(
+#    imsrg_util
+#    PUBLIC
+#    ModelSpace
+#    Operator
+#    HartreeFock
+#    PhysicalConstants
+#    GSL::gsl
+#    PRIVATE
+#    OpenMP::OpenMP_CXX
+#)
 
 add_library(
-    imsrg_util
-    imsrg_util.hh imsrg_util.cc
-)
-target_link_libraries(
-    imsrg_util
-    PUBLIC
-    ModelSpace
-    Operator
-    HartreeFock
-    IMSRGSolver
-    PhysicalConstants
-    GSL::gsl
-    PRIVATE
-    OpenMP::OpenMP_CXX
-    Commutator
-    DarkMatterNREFT
-    GaussLaguerre
-    M0nu
-)
-
-add_library(
-    Generator
+    Generator OBJECT
     Generator.hh Generator.cc
-)
-target_link_libraries(
-    Generator
-    PUBLIC
-    ModelSpace
-    Operator
-    PRIVATE
-    GSL::gsl
-    imsrg_util
-    AngMom
-    Commutator
-    PhysicalConstants
-    OpenMP::OpenMP_CXX
-)
-
-add_library(
-    GeneratorPV
     GeneratorPV.hh GeneratorPV.cc
 )
 target_link_libraries(
-    GeneratorPV
+    Generator
     PUBLIC
     ModelSpace
     Operator
     PRIVATE
-    Generator
     GSL::gsl
     imsrg_util
     AngMom
-    Commutator
+#    Commutator
     PhysicalConstants
     OpenMP::OpenMP_CXX
 )
 
+#add_library(
+#    GeneratorPV OBJECT
+#    GeneratorPV.hh GeneratorPV.cc
+#)
+#target_link_libraries(
+#    GeneratorPV
+#    PUBLIC
+#    ModelSpace
+#    Operator
+#    PRIVATE
+#    Generator
+#    GSL::gsl
+#    imsrg_util
+#    AngMom
+##    Commutator
+#    PhysicalConstants
+#    OpenMP::OpenMP_CXX
+#)
+
 add_library(
-    HFMBPT
+    HFMBPT OBJECT
     HFMBPT.hh HFMBPT.cc
 )
 target_link_libraries(
@@ -566,10 +397,13 @@ target_link_libraries(
     PRIVATE
     PhysicalConstants
     OpenMP::OpenMP_CXX
+    Commutator
 )
 
+
+
 add_library(
-    RPA
+    RPA OBJECT
     RPA.hh RPA.cc
 )
 target_link_libraries(
@@ -583,27 +417,35 @@ target_link_libraries(
     AngMom
 )
 
-add_library(
-    ReferenceImplementations
-    ReferenceImplementations.hh ReferenceImplementations.cc
-)
-target_link_libraries(
-    ReferenceImplementations
-    PUBLIC
-    ModelSpace
-    Operator
-    Commutator
-    PRIVATE
-    ${ARMADILLO_LIBS}
-    PhysicalConstants
-    Version
-    imsrg_util
-    AngMom
-    OpenMP::OpenMP_CXX
-)
+#add_library(
+#    ReferenceImplementations  OBJECT
+#    ReferenceImplementations.hh 
+#    ReferenceImplementations.cc
+#    HFMBPT4.cc
+#    IMSRG2Commutators.cc
+#    IMSRG3Commutators.cc
+#    IMSRG2TensorCommutators.cc
+#    IMSRG3TensorCommutators.cc
+#    FactorizedNestedCommutators.cc
+#)
+#
+#target_link_libraries(
+#    ReferenceImplementations
+#    PUBLIC
+#    ModelSpace
+#    Operator
+##    Commutator
+#    PRIVATE
+#    armadillo
+#    PhysicalConstants
+#    Version
+#    imsrg_util
+#    AngMom
+#    OpenMP::OpenMP_CXX
+#)
 
 add_library(
-    UnitTest
+    UnitTest  OBJECT
     UnitTest.hh UnitTest.cc
 )
 target_link_libraries(
@@ -611,8 +453,8 @@ target_link_libraries(
     PUBLIC
     ModelSpace
     Operator
-    Commutator
     PRIVATE
+    Commutator
     ${ARMADILLO_LIBS}
     PhysicalConstants
     Version
@@ -624,32 +466,41 @@ target_link_libraries(
 
 add_library(
     IMSRG
-    INTERFACE
+    SHARED
 )
 target_link_libraries(
     IMSRG
-    INTERFACE
+#    INTERFACE
+    Version
     ReadWrite
     ModelSpace
     TwoBodyME
     ThreeBodyME
+    ThreeLegME
     Operator
     HartreeFock
     Commutator
+    BCH
     IMSRGSolver
-    IMSRGSolverPV
+#    IMSRGSolverPV
     Generator
-    GeneratorPV
+#    GeneratorPV
     imsrg_util
+#    M0nu
+#    Pwd
     AngMom
     IMSRGProfiler
     Jacobi3BME
-    DarkMatterNREFT
+#    DarkMatterNREFT
     HFMBPT
     UnitTest
+    ReferenceImplementations
     PhysicalConstants
     RPA
 )
+set_target_properties(IMSRG PROPERTIES SUFFIX ".so")
+set_target_properties(IMSRG PROPERTIES LINKER_LANGUAGE CXX)
+
 
 add_executable(
     imsrg++
@@ -666,15 +517,15 @@ target_link_libraries(
 )
 
 
-target_link_libraries(
-    UnitTest
-    PUBLIC
-    IMSRG
-    Parameters
-    PhysicalConstants
-    Version
-    OpenMP::OpenMP_CXX
-)
+#target_link_libraries(
+#    UnitTest
+#    PUBLIC
+#    IMSRG
+#    Parameters
+#    PhysicalConstants
+#    Version
+#    OpenMP::OpenMP_CXX
+#)
 
 
 # Install imsrg executable
@@ -692,3 +543,4 @@ file(GLOB HEADERS *.hh)
 install(FILES ${HEADERS} 
         DESTINATION ${INSTDIR}/include
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ  GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
